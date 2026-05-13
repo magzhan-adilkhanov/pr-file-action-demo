@@ -4,17 +4,20 @@ on:
   pull_request:
     types: [opened, synchronize]
   push:
-    branches: [main] # This triggers specifically when a merge happens
+    branches: [main]
 
 jobs:
   manage-file:
     runs-on: ubuntu-latest
+
     permissions:
       contents: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Git Config
         run: |
@@ -22,20 +25,25 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       # --- LOGIC FOR PRs ---
-      - name: Create or Update File
+      - name: Update file in PR branch
         if: github.event_name == 'pull_request'
         run: |
           echo "PR #${{ github.event.number }} active" > pr-status.txt
-          git add pr-status.txt
-          git commit -m "chore: update pr-status.txt [skip ci]" || echo "No changes"
-          git push origin ${{ github.event.pull_request.head.ref }}
 
-      # --- LOGIC FOR LANDING ON MAIN ---
-      - name: Create or Update File
-        if: github.event_name == 'pull_request'
-        run: |
-          echo "PR #${{ github.event.number }} active" > pr-status.txt
           git add pr-status.txt
           git commit -m "chore: update pr-status.txt [skip ci]" || echo "No changes"
-          # Push using the full remote URL with the GITHUB_TOKEN for permission
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.event.pull_request.head.ref }}
+
+          git push \
+            https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git \
+            HEAD:${{ github.event.pull_request.head.ref }}
+
+      # --- LOGIC AFTER MERGE TO MAIN ---
+      - name: Update file on main
+        if: github.event_name == 'push'
+        run: |
+          echo "Merged into main at $(date)" > merged-status.txt
+
+          git add merged-status.txt
+          git commit -m "chore: update merged-status.txt [skip ci]" || echo "No changes"
+
+          git push

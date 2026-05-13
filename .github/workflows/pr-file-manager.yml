@@ -41,9 +41,13 @@ jobs:
       - name: Update file on main
         if: github.event_name == 'push'
         run: |
+          # 1. Explicitly remove the temporary PR file
+          rm -f pr-status.txt 
+          
+          # 2. Create the success marker
           echo "Merged into main at $(date)" > merged-status.txt
 
-          git add merged-status.txt
-          git commit -m "chore: update merged-status.txt [skip ci]" || echo "No changes"
-
+          # 3. Commit the cleanup
+          git add .
+          git commit -m "chore: cleanup PR artifacts and update status [skip ci]" || echo "No changes"
           git push

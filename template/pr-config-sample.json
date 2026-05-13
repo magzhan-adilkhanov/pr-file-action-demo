@@ -1,0 +1,10 @@
+{
+  "project_name": "data-pipeline-alpha",
+  "environment": "pr-staging",
+  "generated_by": "github-actions",
+  "debug_mode": true,
+  "temporary_resources": {
+    "schema_suffix": "_temp",
+    "ttl_hours": 24
+  }
+}

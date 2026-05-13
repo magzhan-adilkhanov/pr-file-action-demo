@@ -37,5 +37,5 @@ jobs:
           echo "PR #${{ github.event.number }} active" > pr-status.txt
           git add pr-status.txt
           git commit -m "chore: update pr-status.txt [skip ci]" || echo "No changes"
-          # Explicitly target the remote branch using the event context
-          git push origin HEAD:refs/heads/${{ github.event.pull_request.head.ref }}
+          # Push using the full remote URL with the GITHUB_TOKEN for permission
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.event.pull_request.head.ref }}

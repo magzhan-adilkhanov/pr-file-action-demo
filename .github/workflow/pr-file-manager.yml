@@ -1,0 +1,46 @@
+name: PR File Manager
+
+on:
+  pull_request:
+    types: [opened, synchronize, closed]
+
+jobs:
+  manage-file:
+    runs-on: ubuntu-latest
+    # We define permissions to allow the bot to write to the repository
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Use the PR branch head
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      # --- LOGIC FOR OPENING OR UPDATING ---
+      - name: Create or Update File
+        if: github.event.action == 'opened' || github.event.action == 'synchronize'
+        run: |
+          echo "This file was auto-generated for PR #${{ github.event.number }}" > pr-status.txt
+          echo "Last updated on: $(date)" >> pr-status.txt
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pr-status.txt
+          git commit -m "chore: update pr-status.txt" || echo "No changes to commit"
+          git push
+
+      # --- LOGIC FOR MERGING ---
+      - name: Delete File on Merge
+        if: github.event.pull_request.merged == true
+        run: |
+          # Note: Since the PR is merged, we are usually acting on the base branch (e.g., main)
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          if [ -f pr-status.txt ]; then
+            git rm pr-status.txt
+            git commit -m "chore: remove pr-status.txt after merge"
+            git push
+          fi

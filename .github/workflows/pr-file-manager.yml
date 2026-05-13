@@ -31,11 +31,11 @@ jobs:
           git push origin ${{ github.event.pull_request.head.ref }}
 
       # --- LOGIC FOR LANDING ON MAIN ---
-      - name: Cleanup on Main
-        if: github.event_name == 'push'
+      - name: Create or Update File
+        if: github.event_name == 'pull_request'
         run: |
-          if [ -f pr-status.txt ]; then
-            git rm pr-status.txt
-            git commit -m "chore: update pr-status.txt [skip ci]" || echo "No changes to commit"
-            git push origin main
-          fi
+          echo "PR #${{ github.event.number }} active" > pr-status.txt
+          git add pr-status.txt
+          git commit -m "chore: update pr-status.txt [skip ci]" || echo "No changes"
+          # Using HEAD:refs/heads/... ensures the push finds the right branch
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}

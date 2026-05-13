@@ -36,6 +36,6 @@ jobs:
         run: |
           if [ -f pr-status.txt ]; then
             git rm pr-status.txt
-            git commit -m "chore: cleanup pr-status.txt after merge [skip ci]"
+            git commit -m "chore: update pr-status.txt [skip ci]" || echo "No changes to commit"
             git push origin main
           fi

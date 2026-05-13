@@ -36,6 +36,6 @@ jobs:
         run: |
           echo "PR #${{ github.event.number }} active" > pr-status.txt
           git add pr-status.txt
-          git commit -m "chore: update pr-status.txt [skip ci]" || echo "No changes to commit"
-          # This syntax maps the local 'HEAD' commit to the remote branch name
+          git commit -m "chore: update pr-status.txt [skip ci]" || echo "No changes"
+          # Explicitly target the remote branch using the event context
           git push origin HEAD:refs/heads/${{ github.event.pull_request.head.ref }}

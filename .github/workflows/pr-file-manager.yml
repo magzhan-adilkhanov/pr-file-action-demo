@@ -2,7 +2,9 @@ name: PR File Manager
 
 on:
   pull_request:
-    types: [opened, synchronize, closed]
+    types: [opened, synchronize]
+  push:
+    branches: [main] # This triggers specifically when a merge happens
 
 jobs:
   manage-file:
@@ -11,36 +13,29 @@ jobs:
       contents: write
 
     steps:
-
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.merged == true && github.event.pull_request.base.ref || github.event.pull_request.head.ref }}
-
 
       - name: Git Config
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-
+      # --- LOGIC FOR PRs ---
       - name: Create or Update File
-        if: github.event.action == 'opened' || github.event.action == 'synchronize'
+        if: github.event_name == 'pull_request'
         run: |
-          echo "This file was auto-generated for PR #${{ github.event.number }}" > pr-status.txt
-          echo "Last updated on: $(date)" >> pr-status.txt
+          echo "PR #${{ github.event.number }} active" > pr-status.txt
           git add pr-status.txt
-          git commit -m "chore: update pr-status.txt [skip ci]" || echo "No changes to commit"
+          git commit -m "chore: update pr-status.txt [skip ci]" || echo "No changes"
           git push origin ${{ github.event.pull_request.head.ref }}
 
-
-      - name: Delete File on Merge
-        if: github.event.pull_request.merged == true
+      # --- LOGIC FOR LANDING ON MAIN ---
+      - name: Cleanup on Main
+        if: github.event_name == 'push'
         run: |
           if [ -f pr-status.txt ]; then
             git rm pr-status.txt
-            git commit -m "chore: remove pr-status.txt after merge [skip ci]"
-            git push origin ${{ github.event.pull_request.base.ref }}
-          else
-            echo "File not found, nothing to delete."
+            git commit -m "chore: cleanup pr-status.txt after merge [skip ci]"
+            git push origin main
           fi
